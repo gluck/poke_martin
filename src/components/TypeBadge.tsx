@@ -1,5 +1,26 @@
 import './TypeBadge.css';
 
+const typeFrench: Record<string, string> = {
+  normal: 'Normal',
+  fire: 'Feu',
+  water: 'Eau',
+  electric: 'Electrik',
+  grass: 'Plante',
+  ice: 'Glace',
+  fighting: 'Combat',
+  poison: 'Poison',
+  ground: 'Sol',
+  flying: 'Vol',
+  psychic: 'Psy',
+  bug: 'Insecte',
+  rock: 'Roche',
+  ghost: 'Spectre',
+  dragon: 'Dragon',
+  dark: 'Tenebres',
+  steel: 'Acier',
+  fairy: 'Fee',
+};
+
 const typeColors: Record<string, string> = {
   normal: '#A8A878',
   fire: '#F08030',
@@ -27,7 +48,7 @@ export function TypeBadge({ type }: { type: string }) {
       className="type-badge"
       style={{ backgroundColor: typeColors[type] || '#888' }}
     >
-      {type}
+      {typeFrench[type] || type}
     </span>
   );
 }

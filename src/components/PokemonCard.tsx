@@ -145,7 +145,13 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevel
             </button>
           ))}
           {onRemove && (
-            <button className="remove-btn" onClick={onRemove} title="Retirer">
+            <button className="remove-btn" onClick={() => {
+              const name = pokemon.frenchName || pokemon.name;
+              if (pokemon.level > 5) {
+                if (!window.confirm(`${name} est Nv. ${pokemon.level}. Le supprimer ?`)) return;
+              }
+              onRemove();
+            }} title="Retirer">
               &times;
             </button>
           )}
