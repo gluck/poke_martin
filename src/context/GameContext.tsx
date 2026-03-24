@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { GameState, GameAction } from '../types';
-import { getGrowthRate, getLevelForXp } from '../api/evolution';
+import { getGrowthRate, getLevelForXp, getXpForLevel, getAllChainSpeciesIds } from '../api/evolution';
+import type { Pokemon } from '../types';
 
 const STORAGE_KEY = 'poke_martin_state';
 
@@ -33,11 +34,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         players: state.players.map(p => {
           if (p.id !== action.playerId) return p;
           const allPokemon = [...p.team, ...p.reserve];
+          // Block exact duplicate
           if (allPokemon.some(pk => pk.id === action.pokemon.id)) return p;
+          // Block if any Pokemon from the same evolution chain is already present
+          if (action.pokemon.evolutionChainId > 0) {
+            const chainIds = getAllChainSpeciesIds(action.pokemon.evolutionChainId);
+            if (chainIds.length > 0 && allPokemon.some(pk => chainIds.includes(pk.id))) return p;
+          }
           if (p.team.length < 6) {
             return { ...p, team: [...p.team, action.pokemon] };
           }
-          // Team full → add to reserve
           return { ...p, reserve: [...p.reserve, action.pokemon] };
         }),
       };
@@ -98,6 +104,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           return { ...p, team };
         }),
       };
+    case 'SET_LEVEL':
+      return {
+        ...state,
+        players: state.players.map(p => {
+          if (p.id !== action.playerId) return p;
+          const updateLevel = (pk: Pokemon) => {
+            if (pk.id !== action.pokemonId) return pk;
+            const gr = getGrowthRate(pk.growthRateId);
+            const xp = gr ? getXpForLevel(gr, action.level) : pk.currentXp;
+            return { ...pk, level: action.level, currentXp: xp };
+          };
+          return {
+            ...p,
+            team: p.team.map(updateLevel),
+            reserve: p.reserve.map(updateLevel),
+          };
+        }),
+      };
     case 'GAIN_XP':
       return {
         ...state,
@@ -115,26 +139,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           };
         }),
       };
-    case 'EVOLVE_POKEMON':
+    case 'EVOLVE_POKEMON': {
+      const startLevel = 5;
+      const startGr = getGrowthRate(action.evolvedPokemon.growthRateId);
+      const startXp = startGr ? getXpForLevel(startGr, startLevel) : 0;
       return {
         ...state,
         players: state.players.map(p => {
           if (p.id !== action.playerId) return p;
+          const evolve = (pk: typeof action.evolvedPokemon) => {
+            if (pk.id !== action.pokemonId) return pk;
+            return {
+              ...action.evolvedPokemon,
+              level: startLevel,
+              currentXp: startXp,
+            };
+          };
           return {
             ...p,
-            team: p.team.map(pk => {
-              if (pk.id !== action.pokemonId) return pk;
-              // Replace with evolved Pokemon, keeping level/xp/growthRate
-              return {
-                ...action.evolvedPokemon,
-                level: pk.level,
-                currentXp: pk.currentXp,
-                growthRateId: pk.growthRateId,
-              };
-            }),
+            team: p.team.map(evolve),
+            reserve: p.reserve.map(evolve),
           };
         }),
       };
+    }
     case 'SET_PENDING_EVOLUTION':
       return { ...state, pendingEvolution: action.evolution };
     case 'CLEAR_PENDING_EVOLUTION':

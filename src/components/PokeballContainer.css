@@ -94,6 +94,7 @@
   transition: all 0.2s;
   cursor: grab;
   min-width: 0;
+  touch-action: none;
 }
 
 .team-slot:active {
@@ -112,7 +113,6 @@
 .team-slot .pokemon-card {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
 }
 
 .drag-handle {
@@ -221,7 +221,6 @@
 .reserve-slot .pokemon-card {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
 }
 
 .empty-reserve {

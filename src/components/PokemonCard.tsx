@@ -2,7 +2,9 @@ import { useRef, useState } from 'react';
 import type { Pokemon, Player } from '../types';
 import { TypeBadge } from './TypeBadge';
 import { StatBar } from './StatBar';
-import { getGrowthRate, getXpToNextLevel } from '../api/evolution';
+import { getGrowthRate, getXpToNextLevel, getEvolutionNeighbors } from '../api/evolution';
+import { lookupFrenchName } from '../api/frenchNames';
+import { getEffectiveStats } from '../utils/stats';
 import './PokemonCard.css';
 
 interface PokemonCardProps {
@@ -10,10 +12,18 @@ interface PokemonCardProps {
   players?: Player[];
   onAddToPlayer?: (playerId: string) => void;
   onRemove?: () => void;
+  onLevelUp?: () => void;
+  onEvolve?: (speciesId: number) => void;
   compact?: boolean;
 }
 
-export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, compact }: PokemonCardProps) {
+const isDev = import.meta.env.DEV;
+
+function spriteUrl(speciesId: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${speciesId}.png`;
+}
+
+export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevelUp, onEvolve, compact }: PokemonCardProps) {
   const statKeys = ['hp', 'attack', 'defense', 'spAtk', 'spDef', 'speed'] as const;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -40,6 +50,12 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, compact
   const xpProgress = growthRate ? getXpToNextLevel(growthRate, pokemon.currentXp, pokemon.level) : null;
   const showLevel = pokemon.level > 0;
 
+  const neighbors = pokemon.evolutionChainId > 0
+    ? getEvolutionNeighbors(pokemon.evolutionChainId, pokemon.name)
+    : null;
+  const hasEvoLinks = onEvolve && neighbors && (neighbors.prev || neighbors.next.length > 0);
+  const effectiveStats = showLevel ? getEffectiveStats(pokemon.stats, pokemon.level) : pokemon.stats;
+
   return (
     <div className={`pokemon-card${compact ? ' compact' : ''}`}>
       <div className="sprite-wrapper">
@@ -58,7 +74,15 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, compact
         <h3 className="pokemon-name">
           <span className="pokemon-id">#{pokemon.id}</span>
           {pokemon.frenchName || pokemon.name}
-          {showLevel && <span className="pokemon-level">Nv. {pokemon.level}</span>}
+          {showLevel && (
+            isDev && onLevelUp ? (
+              <button className="pokemon-level dev-clickable" onClick={onLevelUp} title="[DEV] +1 niveau">
+                Nv. {pokemon.level}
+              </button>
+            ) : (
+              <span className="pokemon-level">Nv. {pokemon.level}</span>
+            )
+          )}
         </h3>
         {showLevel && xpProgress && (
           <div
@@ -78,13 +102,11 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, compact
             <span className="abilities-label">Talents :</span> {abilitiesTooltip}
           </div>
         )}
-        {!compact && (
-          <div className="pokemon-stats">
-            {statKeys.map(k => (
-              <StatBar key={k} statKey={k} value={pokemon.stats[k]} />
-            ))}
-          </div>
-        )}
+        <div className="pokemon-stats">
+          {statKeys.map(k => (
+            <StatBar key={k} statKey={k} value={effectiveStats[k]} />
+          ))}
+        </div>
         <div className="pokemon-actions">
           {onAddToPlayer && players && players.length > 0 && (
             <select
@@ -103,6 +125,25 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, compact
               })}
             </select>
           )}
+          {hasEvoLinks && neighbors.prev && (
+            <button
+              className="evo-link evo-prev"
+              onClick={() => onEvolve!(neighbors.prev!.speciesId)}
+              title={lookupFrenchName(neighbors.prev.speciesName)}
+            >
+              <img src={spriteUrl(neighbors.prev.speciesId)} alt={neighbors.prev.speciesName} />
+            </button>
+          )}
+          {hasEvoLinks && neighbors.next.map(evo => (
+            <button
+              key={evo.speciesId}
+              className="evo-link evo-next"
+              onClick={() => onEvolve!(evo.speciesId)}
+              title={lookupFrenchName(evo.speciesName)}
+            >
+              <img src={spriteUrl(evo.speciesId)} alt={evo.speciesName} />
+            </button>
+          ))}
           {onRemove && (
             <button className="remove-btn" onClick={onRemove} title="Retirer">
               &times;

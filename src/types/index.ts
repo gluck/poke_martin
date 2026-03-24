@@ -147,6 +147,7 @@ export type GameAction =
   | { type: 'MOVE_TO_TEAM'; playerId: string; pokemonId: number }
   | { type: 'REMOVE_FROM_RESERVE'; playerId: string; pokemonId: number }
   | { type: 'GAIN_XP'; playerId: string; pokemonId: number; xp: number }
+  | { type: 'SET_LEVEL'; playerId: string; pokemonId: number; level: number }
   | { type: 'EVOLVE_POKEMON'; playerId: string; pokemonId: number; evolvedPokemon: Pokemon }
   | { type: 'SET_PENDING_EVOLUTION'; evolution: PendingEvolution }
   | { type: 'CLEAR_PENDING_EVOLUTION' }

@@ -161,6 +161,45 @@ export function findNextEvolution(
   return null;
 }
 
+export function getAllChainSpeciesIds(chainId: number): number[] {
+  const chain = getEvolutionChain(chainId);
+  if (!chain) return [];
+  const ids: number[] = [];
+  function collect(step: EvolutionStep) {
+    ids.push(step.speciesId);
+    step.evolvesTo.forEach(collect);
+  }
+  collect(chain);
+  return ids;
+}
+
+export interface EvolutionNeighbors {
+  prev: { speciesId: number; speciesName: string } | null;
+  next: { speciesId: number; speciesName: string }[];
+}
+
+function findParentInChain(step: EvolutionStep, speciesName: string, parent: EvolutionStep | null): EvolutionStep | null {
+  if (step.speciesName === speciesName) return parent;
+  for (const child of step.evolvesTo) {
+    const found = findParentInChain(child, speciesName, step);
+    if (found) return found;
+  }
+  return null;
+}
+
+export function getEvolutionNeighbors(chainId: number, speciesName: string): EvolutionNeighbors {
+  const chain = getEvolutionChain(chainId);
+  if (!chain) return { prev: null, next: [] };
+
+  const current = findInChain(chain, speciesName);
+  const parent = findParentInChain(chain, speciesName, null);
+
+  return {
+    prev: parent ? { speciesId: parent.speciesId, speciesName: parent.speciesName } : null,
+    next: current?.evolvesTo.map(e => ({ speciesId: e.speciesId, speciesName: e.speciesName })) ?? [],
+  };
+}
+
 // ---- Species data fetching ----
 
 export async function fetchSpeciesData(speciesId: number): Promise<{ growthRateId: string; evolutionChainId: number }> {

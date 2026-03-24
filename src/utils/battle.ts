@@ -1,13 +1,126 @@
 import type { Player, Pokemon, BattleRound, BattleResult, XpGain } from '../types';
 import { getTypeMultiplier, describeEffectiveness } from '../data/typeChart';
 import { getGrowthRate, getLevelForXp } from '../api/evolution';
+import { getEffectiveStats } from './stats';
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ---- Attack verbs by Pokemon primary type ----
+
+const typeVerbs: Record<string, string[]> = {
+  fire: ['crame', 'brule', 'calcine', 'embrase'],
+  water: ['asperge', 'trempe', 'submerge', 'eclabousse'],
+  electric: ['electrocute', 'foudroie', 'electrise', 'paralyse'],
+  grass: ['fouette', 'enlace', 'lacere', 'flagelle'],
+  ice: ['gele', 'congele', 'givre', 'glace'],
+  fighting: ['frappe', 'cogne', 'martele', 'percute'],
+  poison: ['empoisonne', 'intoxique', 'contamine', 'infecte'],
+  ground: ['ensevelit', 'ecrase', 'enterre', 'enfouit'],
+  flying: ['percute', 'plonge sur', 'balaye', 'fonce sur'],
+  psychic: ['deboussole', 'confond', 'destabilise', 'perturbe'],
+  bug: ['pique', 'mord', 'devore', 'grignote'],
+  rock: ['ecrase', 'lapide', 'bombarde', 'pilonne'],
+  ghost: ['hante', 'terrifie', 'maudit', 'tourmente'],
+  dragon: ['dechaine sa fureur sur', 'decime', 'pulverise', 'devaste'],
+  dark: ['fauche', 'embusque', 'traque', 'assomme'],
+  steel: ['percute', 'taillade', 'transperce', 'lacere'],
+  fairy: ['ensorcele', 'enchante', 'eblouit', 'charme'],
+  normal: ['attaque', 'charge', 'plaque', 'bouscule'],
+};
+
+function getAttackVerb(attacker: Pokemon): string {
+  const primaryType = attacker.types[0] || 'normal';
+  const verbs = typeVerbs[primaryType] || typeVerbs.normal;
+  return pick(verbs);
+}
+
+// ---- Damage intensity phrases ----
+
+function getDamagePhrase(damage: number, defenderMaxHp: number): string {
+  const ratio = damage / defenderMaxHp;
+  if (ratio > 0.7) return pick(['DEVASTATEUR !', 'COUP CRITIQUE !', 'ENORME !']);
+  if (ratio > 0.4) return pick(['Un coup puissant !', 'Ca fait mal !', 'Bien touche !']);
+  if (ratio < 0.15) return pick(['Une egratignure.', 'A peine touche.', 'Un petit coup.']);
+  return '';
+}
+
+// ---- Effectiveness phrases ----
+
+function getEffectivenessPhrase(effectiveness: string): string {
+  if (effectiveness === 'super efficace') return pick(["C'est super efficace !", 'Ca fait tres mal !', 'Le point faible !', 'Touche en plein dans le mille !']);
+  if (effectiveness === 'peu efficace') return pick(["Ce n'est pas tres efficace...", "L'attaque est amortie...", 'Ca glisse...', 'Presque aucun effet...']);
+  if (effectiveness === 'aucun effet') return pick(["Ca n'a aucun effet !", "L'attaque passe au travers !", 'Completement immunise !']);
+  return '';
+}
+
+// ---- KO phrases ----
+
+function getKOPhrase(name: string): string {
+  return pick([
+    `${name} est K.O. !`,
+    `${name} s'effondre !`,
+    `${name} ne peut plus combattre !`,
+    `${name} est hors combat !`,
+    `${name} tombe au sol !`,
+  ]);
+}
+
+// ---- Level advantage flavor ----
+
+function getLevelFlavor(attacker: Pokemon, defender: Pokemon): string {
+  const diff = attacker.level - defender.level;
+  if (diff >= 15) return pick([' sans effort', ' comme si de rien', " d'un geste", ' avec dedain']);
+  if (diff <= -15) return pick([' contre toute attente', ' malgre le desavantage', ' avec courage']);
+  return '';
+}
+
+// ---- Build full description ----
+
+function buildDescription(
+  attacker: Pokemon,
+  defender: Pokemon,
+  damage: number,
+  effectiveness: string,
+  fainted: string | null,
+  defenderMaxHp: number,
+): string {
+  const atkName = displayName(attacker);
+  const defName = displayName(defender);
+  const verb = getAttackVerb(attacker);
+  const levelFlavor = getLevelFlavor(attacker, defender);
+
+  let text = `${atkName} ${verb} ${defName}${levelFlavor} !`;
+
+  const intensite = getDamagePhrase(damage, defenderMaxHp);
+  if (intensite) {
+    text += ` ${intensite}`;
+  }
+  text += ` (${damage} degats)`;
+
+  const effPhrase = getEffectivenessPhrase(effectiveness);
+  if (effPhrase) {
+    text += ` ${effPhrase}`;
+  }
+
+  if (fainted) {
+    text += ` ${fainted}`;
+  }
+
+  return text;
+}
+
+// ---- Core battle logic ----
 
 function calculateDamage(
   attacker: Pokemon,
   defender: Pokemon
 ): { damage: number; effectiveness: string } {
-  const atk = Math.max(attacker.stats.attack, attacker.stats.spAtk);
-  const def = Math.max(defender.stats.defense, defender.stats.spDef);
+  const atkStats = getEffectiveStats(attacker.stats, attacker.level);
+  const defStats = getEffectiveStats(defender.stats, defender.level);
+  const atk = Math.max(atkStats.attack, atkStats.spAtk);
+  const def = Math.max(defStats.defense, defStats.spDef);
   const baseDamage = Math.floor((atk / def) * 40 + 5);
   const typeMultiplier = getTypeMultiplier(attacker.types, defender.types);
   const random = 0.85 + Math.random() * 0.15;
@@ -24,9 +137,8 @@ export function executeBattle(player1: Player, player2: Player): BattleResult {
   const rounds: BattleRound[] = [];
   let roundNumber = 0;
 
-  // Clone HP pools
-  const hp1 = player1.team.map(p => p.stats.hp);
-  const hp2 = player2.team.map(p => p.stats.hp);
+  const hp1 = player1.team.map(p => getEffectiveStats(p.stats, p.level).hp);
+  const hp2 = player2.team.map(p => getEffectiveStats(p.stats, p.level).hp);
   let idx1 = 0;
   let idx2 = 0;
 
@@ -35,7 +147,6 @@ export function executeBattle(player1: Player, player2: Player): BattleResult {
     const poke1 = player1.team[idx1];
     const poke2 = player2.team[idx2];
 
-    // Faster Pokemon attacks first
     const p1First = poke1.stats.speed >= poke2.stats.speed;
     const first = p1First ? { poke: poke1, player: player1, hp: hp1, idx: idx1, side: 1 } : { poke: poke2, player: player2, hp: hp2, idx: idx2, side: 2 };
     const second = p1First ? { poke: poke2, player: player2, hp: hp2, idx: idx2, side: 2 } : { poke: poke1, player: player1, hp: hp1, idx: idx1, side: 1 };
@@ -46,7 +157,7 @@ export function executeBattle(player1: Player, player2: Player): BattleResult {
 
     let fainted: string | null = null;
     if (second.hp[second.idx] <= 0) {
-      fainted = displayName(second.poke);
+      fainted = getKOPhrase(displayName(second.poke));
     }
 
     rounds.push({
@@ -57,8 +168,8 @@ export function executeBattle(player1: Player, player2: Player): BattleResult {
       effectiveness: hit1.effectiveness,
       attackerHp: first.hp[first.idx],
       defenderHp: second.hp[second.idx],
-      fainted,
-      description: `${displayName(first.poke)} inflige ${hit1.damage} degats a ${displayName(second.poke)} !${hit1.effectiveness !== 'normal' ? ` C'est ${hit1.effectiveness} !` : ''}${fainted ? ` ${fainted} est K.O. !` : ''}`,
+      fainted: fainted ? displayName(second.poke) : null,
+      description: buildDescription(first.poke, second.poke, hit1.damage, hit1.effectiveness, fainted, getEffectiveStats(second.poke.stats, second.poke.level).hp),
     });
 
     if (fainted) {
@@ -74,7 +185,7 @@ export function executeBattle(player1: Player, player2: Player): BattleResult {
 
     let fainted2: string | null = null;
     if (first.hp[first.idx] <= 0) {
-      fainted2 = displayName(first.poke);
+      fainted2 = getKOPhrase(displayName(first.poke));
     }
 
     rounds.push({
@@ -85,8 +196,8 @@ export function executeBattle(player1: Player, player2: Player): BattleResult {
       effectiveness: hit2.effectiveness,
       attackerHp: second.hp[second.idx],
       defenderHp: first.hp[first.idx],
-      fainted: fainted2,
-      description: `${displayName(second.poke)} inflige ${hit2.damage} degats a ${displayName(first.poke)} !${hit2.effectiveness !== 'normal' ? ` C'est ${hit2.effectiveness} !` : ''}${fainted2 ? ` ${fainted2} est K.O. !` : ''}`,
+      fainted: fainted2 ? displayName(first.poke) : null,
+      description: buildDescription(second.poke, first.poke, hit2.damage, hit2.effectiveness, fainted2, getEffectiveStats(first.poke.stats, first.poke.level).hp),
     });
 
     if (fainted2) {
@@ -97,14 +208,11 @@ export function executeBattle(player1: Player, player2: Player): BattleResult {
 
   const winner = idx1 >= player1.team.length ? player2 : idx2 >= player2.team.length ? player1 : null;
 
-  // Compute XP gains for winning team's Pokemon
   const xpGains: XpGain[] = [];
   if (winner) {
     const winnerTeam = winner === player1 ? player1.team : player2.team;
     const loserTeam = winner === player1 ? player2.team : player1.team;
 
-    // Each winning Pokemon earns XP from the opponents it helped defeat
-    // Simple approach: distribute total XP equally among surviving winners
     const totalXp = loserTeam.reduce((sum, p) => {
       const scaledXp = Math.floor(p.baseExperience * (p.level / 5) * 1.5);
       return sum + Math.max(scaledXp, 10);
