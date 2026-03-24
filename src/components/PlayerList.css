@@ -1,0 +1,54 @@
+.player-list h2 {
+  color: #DC0A2D;
+  margin: 0 0 16px;
+}
+
+.add-player-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.player-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.player-input:focus {
+  border-color: #DC0A2D;
+}
+
+.add-player-btn {
+  padding: 10px 24px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.add-player-btn:hover {
+  background: #555;
+}
+
+.no-players {
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
+  padding: 24px;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}

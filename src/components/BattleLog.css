@@ -1,0 +1,232 @@
+.battle-log-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.battle-log {
+  background: white;
+  border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.battle-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #DC0A2D, #A00020);
+  color: white;
+}
+
+.battle-log-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.battle-rounds {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.battle-round {
+  padding: 10px 14px;
+  background: #f8f8f8;
+  border-radius: 10px;
+  border-left: 4px solid #ddd;
+  animation: slideIn 0.3s ease both;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.battle-round.has-faint {
+  border-left-color: #ff4444;
+  background: #fff5f5;
+}
+
+.battle-round.super-effective {
+  border-left-color: #F8D030;
+  background: #fffdf0;
+}
+
+.round-number {
+  font-size: 0.7rem;
+  color: #aaa;
+  font-weight: 700;
+}
+
+.round-description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.round-hp {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.battle-waiting {
+  text-align: center;
+  padding: 12px;
+}
+
+.waiting-dots::after {
+  content: '...';
+  animation: dots 1s steps(4) infinite;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #aaa;
+  letter-spacing: 4px;
+}
+
+@keyframes dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+}
+
+.battle-footer {
+  padding: 12px 20px;
+  text-align: center;
+  background: #f8f8f8;
+  border-top: 1px solid #eee;
+}
+
+.skip-btn {
+  padding: 8px 24px;
+  background: #eee;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.skip-btn:hover {
+  background: #ddd;
+  color: #333;
+}
+
+.battle-winner {
+  padding: 20px;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
+  background: #f0f0f0;
+  animation: fadeIn 0.4s ease;
+}
+
+.battle-winner.has-winner {
+  background: linear-gradient(135deg, #F8D030, #F0A030);
+  color: #333;
+  animation: fadeIn 0.3s ease, pulse 0.5s ease 0.3s;
+}
+
+.xp-gains-section {
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #e8f4fd, #f0f8ff);
+  border-radius: 10px;
+  border-left: 4px solid #4a90d9;
+  animation: slideIn 0.3s ease both;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xp-gains-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4a90d9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.xp-gain-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.xp-pokemon-name {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.xp-amount {
+  color: #4a90d9;
+  font-weight: 700;
+}
+
+.level-up-badge {
+  background: linear-gradient(135deg, #F8D030, #F0A030);
+  color: #333;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  animation: pulse 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}

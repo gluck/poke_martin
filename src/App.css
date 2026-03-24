@@ -1,0 +1,28 @@
+.app {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.loading-banner {
+  text-align: center;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #F8D030, #F0A030);
+  color: #333;
+  font-weight: 600;
+  font-size: 0.9rem;
+  animation: pulse-banner 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-banner {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.app-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}

@@ -1,0 +1,132 @@
+.evolution-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+  animation: evo-fadeIn 0.5s ease;
+}
+
+.evolution-modal {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(100, 200, 255, 0.15);
+}
+
+.evolution-title {
+  margin: 0 0 24px;
+  font-size: 1.6rem;
+  color: #F8D030;
+  text-shadow: 0 0 20px rgba(248, 208, 48, 0.4);
+  animation: evo-glow 2s ease-in-out infinite;
+}
+
+.evolution-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.evolution-pokemon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.evolution-sprite {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.15));
+}
+
+.evolution-sprite.glow {
+  animation: evo-sprite-glow 1.5s ease-in-out infinite;
+}
+
+.evolution-name {
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.evolution-arrow {
+  font-size: 2.5rem;
+  color: #F8D030;
+  animation: evo-arrow-pulse 1s ease-in-out infinite;
+}
+
+.evolution-question {
+  color: #ccc;
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+  text-transform: capitalize;
+}
+
+.evolution-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.evolution-btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.evolution-btn.accept {
+  background: linear-gradient(135deg, #F8D030, #F0A030);
+  color: #333;
+  box-shadow: 0 4px 20px rgba(248, 208, 48, 0.3);
+}
+
+.evolution-btn.accept:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 30px rgba(248, 208, 48, 0.5);
+}
+
+.evolution-btn.decline {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.evolution-btn.decline:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+@keyframes evo-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes evo-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(248, 208, 48, 0.4); }
+  50% { text-shadow: 0 0 40px rgba(248, 208, 48, 0.7); }
+}
+
+@keyframes evo-sprite-glow {
+  0%, 100% { filter: drop-shadow(0 4px 12px rgba(100, 200, 255, 0.2)); }
+  50% { filter: drop-shadow(0 4px 24px rgba(100, 200, 255, 0.5)); }
+}
+
+@keyframes evo-arrow-pulse {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}

@@ -1,0 +1,66 @@
+.app-header {
+  background: linear-gradient(135deg, #DC0A2D, #B00020);
+  color: white;
+  text-align: center;
+  margin-bottom: 32px;
+  border-radius: 0 0 24px 24px;
+  overflow: hidden;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px 16px;
+}
+
+.header-top h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 1px;
+}
+
+.pokeball-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, white 45%, #333 45%, #333 55%, white 55%);
+  border: 3px solid white;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pokeball-logo::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #333;
+}
+
+.header-divider {
+  height: 6px;
+  background: #333;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.divider-ball {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #333;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}

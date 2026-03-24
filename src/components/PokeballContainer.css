@@ -1,0 +1,234 @@
+.pokeball-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  border: 2px solid #eee;
+  overflow: hidden;
+}
+
+.pokeball-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.pokeball-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #DC0A2D 50%, white 50%);
+  border: 2px solid #333;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pokeball-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #333;
+}
+
+.pokeball-header h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 1.1rem;
+}
+
+.team-count {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 600;
+}
+
+.delete-player-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #eee;
+  color: #999;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-player-btn:hover {
+  background: #ff4444;
+  color: white;
+}
+
+.empty-team {
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
+  padding: 16px;
+  margin: 0;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  cursor: grab;
+  min-width: 0;
+}
+
+.team-slot:active {
+  cursor: grabbing;
+}
+
+.team-slot.dragging {
+  opacity: 0.4;
+}
+
+.team-slot.drag-over {
+  border-color: #DC0A2D;
+  background: rgba(220, 10, 45, 0.05);
+}
+
+.team-slot .pokemon-card {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.drag-handle {
+  color: #ccc;
+  font-size: 1rem;
+  padding: 4px;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.team-slot:hover .drag-handle {
+  color: #888;
+}
+
+/* Move buttons */
+
+.move-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-weight: 700;
+}
+
+.move-btn.to-reserve {
+  background: #eee;
+  color: #888;
+}
+
+.move-btn.to-reserve:hover {
+  background: #F0A030;
+  color: white;
+}
+
+.move-btn.to-team {
+  background: #eee;
+  color: #888;
+}
+
+.move-btn.to-team:hover {
+  background: #4a90d9;
+  color: white;
+}
+
+.move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Reserve section */
+
+.reserve-section {
+  margin-top: 12px;
+  border-top: 1px dashed #e0e0e0;
+  padding-top: 8px;
+}
+
+.reserve-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #888;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.reserve-toggle:hover {
+  color: #555;
+}
+
+.reserve-toggle-icon {
+  font-size: 0.65rem;
+  transition: transform 0.2s;
+}
+
+.reserve-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 4px;
+  border-left: 2px solid #f0e8d8;
+}
+
+.reserve-slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.85;
+  min-width: 0;
+}
+
+.reserve-slot .pokemon-card {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.empty-reserve {
+  color: #bbb;
+  font-style: italic;
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 8px;
+  margin: 0;
+}
