@@ -33,7 +33,7 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, compact
   };
 
   const abilitiesTooltip = pokemon.abilities?.length
-    ? pokemon.abilities.map(a => a.replace(/-/g, ' ')).join(', ')
+    ? pokemon.abilities.join(', ')
     : '';
 
   const growthRate = getGrowthRate(pokemon.growthRateId);

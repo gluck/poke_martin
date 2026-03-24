@@ -1,6 +1,7 @@
 import type { PokeAPIPokemon, PokeAPIListResponse, Pokemon, PokemonStats } from '../types';
 import { lookupFrenchName, searchFrenchIndex, getFrenchNameIndex } from './frenchNames';
 import { fetchSpeciesData, fetchGrowthRate, fetchEvolutionChain, getXpForLevel } from './evolution';
+import { fetchAbilitiesFrenchNames } from './abilities';
 
 const BASE_URL = 'https://pokeapi.co/api/v2';
 
@@ -37,10 +38,13 @@ export function transformApiPokemonSync(raw: PokeAPIPokemon): Pokemon {
 export async function transformApiPokemon(raw: PokeAPIPokemon): Promise<Pokemon> {
   const base = transformApiPokemonSync(raw);
   try {
-    const species = await fetchSpeciesData(raw.id);
+    const [species, frenchAbilities] = await Promise.all([
+      fetchSpeciesData(raw.id),
+      fetchAbilitiesFrenchNames(raw.abilities.map(a => a.ability.name)),
+    ]);
     base.growthRateId = species.growthRateId;
     base.evolutionChainId = species.evolutionChainId;
-    // Pre-fetch and cache growth rate and evolution chain
+    base.abilities = frenchAbilities;
     const growthRate = await fetchGrowthRate(species.growthRateId);
     base.currentXp = getXpForLevel(growthRate, base.level);
     if (species.evolutionChainId > 0) {
