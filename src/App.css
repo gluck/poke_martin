@@ -26,3 +26,10 @@
   flex-direction: column;
   gap: 40px;
 }
+
+.app-footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 0.7rem;
+  color: #bbb;
+}

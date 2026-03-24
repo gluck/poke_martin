@@ -1,6 +1,5 @@
 const CACHE_NAME = 'poke-martin-v1';
-const PRECACHE_URLS = [
-  '/',
+const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.svg',
   '/icon-192.png',
@@ -9,7 +8,7 @@ const PRECACHE_URLS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
@@ -25,9 +24,10 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
   // Network-first for API calls (PokeAPI)
-  if (request.url.includes('pokeapi.co')) {
+  if (request.url.includes('pokeapi.co') || request.url.includes('raw.githubusercontent.com')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -40,17 +40,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for app assets
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response.ok && request.method === 'GET') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      });
-    })
-  );
+  // Network-first for app pages and hashed assets (HTML, JS, CSS)
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok && request.method === 'GET') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Fallback: just fetch
+  event.respondWith(fetch(request));
 });

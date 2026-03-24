@@ -60,6 +60,9 @@ function App() {
           onDecline={handleDeclineEvolution}
         />
       )}
+      <footer className="app-footer">
+        v{__APP_VERSION__} ({__COMMIT_HASH__})
+      </footer>
     </div>
   )
 }
