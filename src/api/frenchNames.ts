@@ -89,8 +89,17 @@ export function getFrenchNameIndexSync(): FrenchNameEntry[] | null {
 
 export function lookupFrenchName(englishName: string): string {
   if (!nameIndex) return englishName;
+  // Exact match first
   const entry = nameIndex.find(e => e.englishName === englishName);
-  return entry?.frenchName ?? englishName;
+  if (entry) return entry.frenchName;
+  // Fallback: try base name (before form suffix) e.g. "urshifu-single-strike" → "urshifu"
+  const dashIdx = englishName.indexOf('-');
+  if (dashIdx > 0) {
+    const baseName = englishName.substring(0, dashIdx);
+    const baseEntry = nameIndex.find(e => e.englishName === baseName);
+    if (baseEntry) return baseEntry.frenchName;
+  }
+  return englishName;
 }
 
 function stripAccents(s: string): string {

@@ -4,15 +4,22 @@ import { PokemonSearch } from './components/PokemonSearch'
 import { PlayerList } from './components/PlayerList'
 import { BattleArena } from './components/BattleArena'
 import { EvolutionModal } from './components/EvolutionModal'
+import { AuthPage } from './components/AuthPage'
+import { FriendsList } from './components/FriendsList'
+import { OnlineBattleArena } from './components/OnlineBattleArena'
+import { BattleHistory } from './components/BattleHistory'
+import { ChallengeNotification } from './components/ChallengeNotification'
 import { getFrenchNameIndex, getFrenchNameIndexSync } from './api/frenchNames'
 import { useGame } from './context/GameContext'
+import { useAuth } from './context/AuthContext'
 import { transformApiPokemon } from './api/pokeapi'
 import type { PokeAPIPokemon } from './types'
 import './App.css'
 
 function App() {
+  const { user, loading: authLoading } = useAuth();
   const [indexReady, setIndexReady] = useState(() => getFrenchNameIndexSync() !== null);
-  const { state, dispatch } = useGame();
+  const { state, dispatch, loading: gameLoading } = useGame();
 
   useEffect(() => {
     if (!indexReady) {
@@ -40,19 +47,36 @@ function App() {
     dispatch({ type: 'CLEAR_PENDING_EVOLUTION' });
   }, [dispatch]);
 
+  if (authLoading) {
+    return (
+      <div className="app loading-screen">
+        <div className="auth-pokeball" />
+        <p>Chargement...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
   return (
     <div className="app">
       <Header />
-      {!indexReady && (
+      {(gameLoading || !indexReady) && (
         <div className="loading-banner">
-          Chargement de l'index des Pokemon...
+          {gameLoading ? 'Chargement de tes Pokemon...' : "Chargement de l'index des Pokemon..."}
         </div>
       )}
       <main className="app-main">
         <PokemonSearch />
         <PlayerList />
         <BattleArena />
+        <FriendsList />
+        <OnlineBattleArena />
+        <BattleHistory />
       </main>
+      <ChallengeNotification />
       {state.pendingEvolution && (
         <EvolutionModal
           evolution={state.pendingEvolution}

@@ -62,6 +62,16 @@
   box-shadow: 0 0 6px rgba(58, 154, 58, 0.4);
 }
 
+.evo-mega {
+  border-color: #9b59b6;
+}
+
+.evo-mega:hover {
+  background: #f5eef8;
+  border-color: #7d3c98;
+  box-shadow: 0 0 6px rgba(155, 89, 182, 0.4);
+}
+
 
 .sprite-wrapper {
   position: relative;

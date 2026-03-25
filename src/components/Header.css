@@ -13,6 +13,7 @@
   justify-content: center;
   gap: 12px;
   padding: 24px 16px 16px;
+  position: relative;
 }
 
 .header-top h1 {
@@ -42,6 +43,41 @@
   border-radius: 50%;
   background: white;
   border: 3px solid #333;
+}
+
+.header-user {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-username {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.header-logout {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.header-logout:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .header-divider {

@@ -30,6 +30,14 @@ export interface PokeAPIPokemon {
     ability: { name: string };
     is_hidden: boolean;
   }[];
+  species: {
+    name: string;
+    url: string;
+  };
+  forms: {
+    name: string;
+    url: string;
+  }[];
 }
 
 export interface PokeAPIListResponse {
@@ -152,4 +160,5 @@ export type GameAction =
   | { type: 'SET_PENDING_EVOLUTION'; evolution: PendingEvolution }
   | { type: 'CLEAR_PENDING_EVOLUTION' }
   | { type: 'SET_BATTLE_RESULT'; result: BattleResult }
-  | { type: 'CLEAR_BATTLE' };
+  | { type: 'CLEAR_BATTLE' }
+  | { type: 'LOAD_STATE'; players: Player[] };

@@ -1,0 +1,95 @@
+.online-battle h2 {
+  color: #DC0A2D;
+  margin: 0 0 16px;
+}
+
+.online-battle-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.online-battle-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.online-battle-side label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.online-battle-side select {
+  padding: 10px 14px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: white;
+  outline: none;
+}
+
+.online-battle-side select:focus {
+  border-color: #DC0A2D;
+}
+
+.online-vs {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #DC0A2D;
+  align-self: center;
+  padding-top: 20px;
+}
+
+.online-fight-btn {
+  display: block;
+  margin: 0 auto;
+  padding: 14px 48px;
+  background: linear-gradient(135deg, #4a90d9, #2a6ab9);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(74, 144, 217, 0.3);
+}
+
+.online-fight-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 6px 30px rgba(74, 144, 217, 0.4);
+}
+
+.online-fight-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.online-error {
+  color: #DC0A2D;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.online-success {
+  color: #3a9a3a;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 8px;
+  animation: pulse-text 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

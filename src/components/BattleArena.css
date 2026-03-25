@@ -71,8 +71,54 @@
   transform: scale(0.98);
 }
 
+/* Random battle */
+
+.random-battle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px dashed #e0e0e0;
+}
+
+.random-battle-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.random-opponent {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #888;
+  font-style: italic;
+  min-width: 180px;
+  text-align: center;
+}
+
+.random-fight-btn {
+  background: linear-gradient(135deg, #F0A030, #E08020);
+  box-shadow: 0 4px 20px rgba(240, 160, 48, 0.3);
+}
+
+.random-fight-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 30px rgba(240, 160, 48, 0.4);
+}
+
+.random-fight-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .battle-error {
   color: #DC0A2D;
   font-size: 0.9rem;
   font-weight: 600;
+  text-align: center;
+  margin-top: 8px;
 }

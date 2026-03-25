@@ -1,0 +1,130 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #DC0A2D 0%, #A00020 100%);
+  padding: 20px;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px 32px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.auth-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #DC0A2D;
+}
+
+.auth-pokeball {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #DC0A2D 50%, white 50%);
+  border: 3px solid #333;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.auth-pokeball::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #333;
+}
+
+.auth-card h2 {
+  margin: 0 0 20px;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-input {
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.auth-input:focus {
+  border-color: #DC0A2D;
+}
+
+.auth-submit {
+  padding: 12px;
+  background: linear-gradient(135deg, #DC0A2D, #A00020);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(220, 10, 45, 0.3);
+}
+
+.auth-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(220, 10, 45, 0.4);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-error {
+  color: #DC0A2D;
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+.auth-success {
+  color: #3a9a3a;
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+.auth-toggle {
+  background: none;
+  border: none;
+  color: #4a90d9;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 16px;
+  text-decoration: underline;
+}
+
+.auth-toggle:hover {
+  color: #2a6ab9;
+}

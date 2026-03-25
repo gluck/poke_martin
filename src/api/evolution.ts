@@ -138,6 +138,16 @@ function findInChain(step: EvolutionStep, speciesName: string): EvolutionStep | 
     const found = findInChain(child, speciesName);
     if (found) return found;
   }
+  // Fallback: try matching by base name (e.g. "urshifu-single-strike" matches "urshifu")
+  const dashIdx = speciesName.indexOf('-');
+  if (dashIdx > 0) {
+    const baseName = speciesName.substring(0, dashIdx);
+    if (step.speciesName === baseName) return step;
+    for (const child of step.evolvesTo) {
+      const found = findInChain(child, baseName);
+      if (found) return found;
+    }
+  }
   return null;
 }
 
@@ -173,9 +183,16 @@ export function getAllChainSpeciesIds(chainId: number): number[] {
   return ids;
 }
 
+export interface EvolutionNeighborEntry {
+  speciesId: number;
+  speciesName: string;
+  label?: string;  // "Mega", "Mega X", etc. — undefined for regular evolutions
+}
+
 export interface EvolutionNeighbors {
-  prev: { speciesId: number; speciesName: string } | null;
-  next: { speciesId: number; speciesName: string }[];
+  prev: EvolutionNeighborEntry | null;
+  next: EvolutionNeighborEntry[];
+  megas: EvolutionNeighborEntry[];
 }
 
 function findParentInChain(step: EvolutionStep, speciesName: string, parent: EvolutionStep | null): EvolutionStep | null {
@@ -184,29 +201,162 @@ function findParentInChain(step: EvolutionStep, speciesName: string, parent: Evo
     const found = findParentInChain(child, speciesName, step);
     if (found) return found;
   }
+  // Fallback: try base name
+  const dashIdx = speciesName.indexOf('-');
+  if (dashIdx > 0) {
+    const baseName = speciesName.substring(0, dashIdx);
+    if (step.speciesName === baseName) return parent;
+    for (const child of step.evolvesTo) {
+      const found = findParentInChain(child, baseName, step);
+      if (found) return found;
+    }
+  }
   return null;
 }
 
-export function getEvolutionNeighbors(chainId: number, speciesName: string): EvolutionNeighbors {
+// Check if a pokemon name is a non-default variant by scanning all cached varieties
+function isVariantForm(pokemonName: string): boolean {
+  if (!Object.keys(varietiesCache).length) {
+    varietiesCache = loadVarietiesCache();
+  }
+  for (const varieties of Object.values(varietiesCache)) {
+    if (varieties.some(v => v.name === pokemonName)) return true;
+  }
+  return false;
+}
+
+// Find the base species for a variant pokemon name by scanning all cached varieties
+function findBaseSpeciesForVariant(variantName: string): { speciesId: number; speciesName: string } | null {
+  if (!Object.keys(varietiesCache).length) {
+    varietiesCache = loadVarietiesCache();
+  }
+  for (const [speciesIdStr, varieties] of Object.entries(varietiesCache)) {
+    const match = varieties.find(v => v.name === variantName);
+    if (match) {
+      const speciesId = parseInt(speciesIdStr, 10);
+      // Base name: remove the variant suffix (everything after the first dash that makes it a variant)
+      // Find the default form name from the chain or derive from the variant name
+      const dashIdx = variantName.indexOf('-');
+      const baseName = dashIdx > 0 ? variantName.substring(0, dashIdx) : variantName;
+      return { speciesId, speciesName: baseName };
+    }
+  }
+  return null;
+}
+
+export function getEvolutionNeighbors(chainId: number, speciesName: string, speciesId?: number): EvolutionNeighbors {
   const chain = getEvolutionChain(chainId);
-  if (!chain) return { prev: null, next: [] };
+
+  // If it's any variant form (mega, gmax, crowned, etc.), show base as prev
+  if (isVariantForm(speciesName)) {
+    const base = findBaseSpeciesForVariant(speciesName);
+    return {
+      prev: base ? { speciesId: base.speciesId, speciesName: base.speciesName } : null,
+      next: [],
+      megas: [],
+    };
+  }
+
+  if (!chain) return { prev: null, next: [], megas: [] };
 
   const current = findInChain(chain, speciesName);
   const parent = findParentInChain(chain, speciesName, null);
 
-  return {
-    prev: parent ? { speciesId: parent.speciesId, speciesName: parent.speciesName } : null,
-    next: current?.evolvesTo.map(e => ({ speciesId: e.speciesId, speciesName: e.speciesName })) ?? [],
-  };
+  const prev: EvolutionNeighborEntry | null = parent
+    ? { speciesId: parent.speciesId, speciesName: parent.speciesName }
+    : null;
+
+  const next = current?.evolvesTo.map(e => ({ speciesId: e.speciesId, speciesName: e.speciesName })) ?? [];
+
+  // Get mega/alternate forms for this species
+  const megas: EvolutionNeighborEntry[] = [];
+  if (speciesId) {
+    const varieties = getVarieties(speciesId);
+    for (const v of varieties) {
+      megas.push({ speciesId: v.pokemonId, speciesName: v.name, label: v.label });
+    }
+  }
+
+  return { prev, next, megas };
+}
+
+// ---- Varieties (Mega evolutions, alternate forms) ----
+
+export interface PokemonVariety {
+  pokemonId: number;
+  name: string;
+  isDefault: boolean;
+  isMega: boolean;
+  label: string; // e.g. "Mega", "Mega X", "Mega Y", "Gmax"
+}
+
+const VARIETIES_CACHE_KEY = 'poke_martin_varieties';
+let varietiesCache: Record<number, PokemonVariety[]> = {};
+
+function loadVarietiesCache(): Record<number, PokemonVariety[]> {
+  try {
+    const saved = localStorage.getItem(VARIETIES_CACHE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch { /* ignore */ }
+  return {};
+}
+
+function saveVarietiesCache() {
+  try {
+    localStorage.setItem(VARIETIES_CACHE_KEY, JSON.stringify(varietiesCache));
+  } catch { /* ignore */ }
+}
+
+function parseVarietyLabel(name: string, baseName: string): string {
+  const suffix = name.replace(baseName + '-', '');
+  if (suffix === 'mega') return 'Mega';
+  if (suffix === 'mega-x') return 'Mega X';
+  if (suffix === 'mega-y') return 'Mega Y';
+  if (suffix === 'gmax') return 'Gmax';
+  if (suffix.startsWith('mega')) return 'Mega ' + suffix.replace('mega-', '').toUpperCase();
+  return suffix.charAt(0).toUpperCase() + suffix.slice(1);
+}
+
+export function getVarieties(speciesId: number): PokemonVariety[] {
+  if (!Object.keys(varietiesCache).length) {
+    varietiesCache = loadVarietiesCache();
+  }
+  return varietiesCache[speciesId] ?? [];
 }
 
 // ---- Species data fetching ----
 
-export async function fetchSpeciesData(speciesId: number): Promise<{ growthRateId: string; evolutionChainId: number }> {
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesId}`);
+export async function fetchSpeciesData(speciesIdOrUrl: number | string): Promise<{ growthRateId: string; evolutionChainId: number }> {
+  const url = typeof speciesIdOrUrl === 'string'
+    ? speciesIdOrUrl
+    : `https://pokeapi.co/api/v2/pokemon-species/${speciesIdOrUrl}`;
+  const res = await fetch(url);
   const data = await res.json();
   const growthRateId = data.growth_rate?.name ?? 'medium';
   const chainUrl: string = data.evolution_chain?.url ?? '';
   const evolutionChainId = parseInt(chainUrl.split('/').filter(Boolean).pop()!, 10) || 0;
+
+  // Parse varieties (mega evolutions, alternate forms)
+  if (!Object.keys(varietiesCache).length) {
+    varietiesCache = loadVarietiesCache();
+  }
+  if (data.varieties && data.varieties.length > 1) {
+    const baseName = data.name;
+    const varieties: PokemonVariety[] = data.varieties.map((v: { is_default: boolean; pokemon: { name: string; url: string } }) => {
+      const pokemonUrl = v.pokemon.url;
+      const pokemonId = parseInt(pokemonUrl.split('/').filter(Boolean).pop()!, 10);
+      const isMega = v.pokemon.name.includes('-mega');
+      return {
+        pokemonId,
+        name: v.pokemon.name,
+        isDefault: v.is_default,
+        isMega,
+        label: v.is_default ? 'Normal' : parseVarietyLabel(v.pokemon.name, baseName),
+      };
+    });
+    varietiesCache[data.id] = varieties.filter(v => !v.isDefault);
+    saveVarietiesCache();
+  }
+
   return { growthRateId, evolutionChainId };
 }

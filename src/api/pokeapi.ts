@@ -5,6 +5,43 @@ import { fetchAbilitiesFrenchNames } from './abilities';
 
 const BASE_URL = 'https://pokeapi.co/api/v2';
 
+// Cache French form names (e.g. "urshifu-single-strike" → "Shifours Style Poing Final")
+const FORM_NAMES_CACHE_KEY = 'poke_martin_form_names_fr';
+let formNamesCache: Record<string, string> = {};
+
+function loadFormNamesCache() {
+  if (Object.keys(formNamesCache).length) return;
+  try {
+    const saved = localStorage.getItem(FORM_NAMES_CACHE_KEY);
+    if (saved) formNamesCache = JSON.parse(saved);
+  } catch { /* ignore */ }
+}
+
+function saveFormNamesCache() {
+  try {
+    localStorage.setItem(FORM_NAMES_CACHE_KEY, JSON.stringify(formNamesCache));
+  } catch { /* ignore */ }
+}
+
+async function fetchFormFrenchName(formUrl: string, pokemonName: string): Promise<string | null> {
+  loadFormNamesCache();
+  if (formNamesCache[pokemonName]) return formNamesCache[pokemonName];
+
+  try {
+    const res = await fetch(formUrl);
+    if (!res.ok) return null;
+    const data = await res.json();
+    // Use `names` array which has the full localized name (e.g. "Shifours Style Poing Final")
+    const frEntry = data.names?.find((n: { language: { name: string }; name: string }) => n.language.name === 'fr');
+    if (frEntry?.name) {
+      formNamesCache[pokemonName] = frEntry.name;
+      saveFormNamesCache();
+      return frEntry.name;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 function mapStats(stats: PokeAPIPokemon['stats']): PokemonStats {
   const get = (name: string) => stats.find(s => s.stat.name === name)?.base_stat ?? 0;
   return {
@@ -39,7 +76,7 @@ export async function transformApiPokemon(raw: PokeAPIPokemon): Promise<Pokemon>
   const base = transformApiPokemonSync(raw);
   try {
     const [species, frenchAbilities] = await Promise.all([
-      fetchSpeciesData(raw.id),
+      fetchSpeciesData(raw.species?.url || raw.id),
       fetchAbilitiesFrenchNames(raw.abilities.map(a => a.ability.name)),
     ]);
     base.growthRateId = species.growthRateId;
@@ -49,6 +86,14 @@ export async function transformApiPokemon(raw: PokeAPIPokemon): Promise<Pokemon>
     base.currentXp = getXpForLevel(growthRate, base.level);
     if (species.evolutionChainId > 0) {
       await fetchEvolutionChain(species.evolutionChainId);
+    }
+    // Fetch French form name for variants (e.g. urshifu-single-strike → "Shifours Style Poing Final")
+    if (raw.name !== raw.species?.name && raw.forms?.length) {
+      const formUrl = raw.forms[0]?.url;
+      if (formUrl) {
+        const formName = await fetchFormFrenchName(formUrl, raw.name);
+        if (formName) base.frenchName = formName;
+      }
     }
   } catch { /* species data is optional enrichment */ }
   return base;

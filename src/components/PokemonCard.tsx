@@ -51,9 +51,9 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevel
   const showLevel = pokemon.level > 0;
 
   const neighbors = pokemon.evolutionChainId > 0
-    ? getEvolutionNeighbors(pokemon.evolutionChainId, pokemon.name)
+    ? getEvolutionNeighbors(pokemon.evolutionChainId, pokemon.name, pokemon.id)
     : null;
-  const hasEvoLinks = onEvolve && neighbors && (neighbors.prev || neighbors.next.length > 0);
+  const hasEvoLinks = onEvolve && neighbors && (neighbors.prev || neighbors.next.length > 0 || neighbors.megas.length > 0);
   const effectiveStats = showLevel ? getEffectiveStats(pokemon.stats, pokemon.level) : pokemon.stats;
 
   return (
@@ -142,6 +142,16 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevel
               title={lookupFrenchName(evo.speciesName)}
             >
               <img src={spriteUrl(evo.speciesId)} alt={evo.speciesName} />
+            </button>
+          ))}
+          {hasEvoLinks && neighbors.megas.map(mega => (
+            <button
+              key={mega.speciesId}
+              className="evo-link evo-mega"
+              onClick={() => onEvolve!(mega.speciesId)}
+              title={mega.label ?? mega.speciesName}
+            >
+              <img src={spriteUrl(mega.speciesId)} alt={mega.speciesName} />
             </button>
           ))}
           {onRemove && (

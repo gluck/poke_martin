@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import type { BattleResult } from '../types';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import type { BattleResult, Pokemon } from '../types';
 import './BattleLog.css';
 
 const ROUND_DELAY_MS = 1200;
@@ -11,6 +11,10 @@ function playCry(url: string | null | undefined) {
     audio.volume = 0.5;
     audio.play();
   } catch { /* ignore */ }
+}
+
+function spriteUrl(pokedexId: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokedexId}.png`;
 }
 
 interface BattleLogProps {
@@ -30,6 +34,49 @@ export function BattleLog({ result, onClose, onXpAwarded }: BattleLogProps) {
   const totalRounds = result.rounds.length;
   const battleDone = visibleCount >= totalRounds;
 
+  // Compute KO'd and active Pokemon based on visible rounds
+  const { faintedIds, activeP1Id, activeP2Id } = useMemo(() => {
+    const fainted = new Set<number>();
+    let lastP1: Pokemon | null = null;
+    let lastP2: Pokemon | null = null;
+
+    for (let i = 0; i < visibleCount; i++) {
+      const round = result.rounds[i];
+      // Track which Pokemon from which side are fighting
+      const atkPoke = round.attacker.pokemon;
+      const defPoke = round.defender.pokemon;
+
+      if (round.attacker.playerName === result.player1.name) {
+        lastP1 = atkPoke;
+        lastP2 = defPoke;
+      } else {
+        lastP1 = defPoke;
+        lastP2 = atkPoke;
+      }
+
+      if (round.fainted) {
+        // Find which pokemon fainted by name match
+        const faintedName = round.fainted;
+        const p1Match = result.player1.team.find(p => {
+          const dn = p.frenchName || p.name;
+          return dn.charAt(0).toUpperCase() + dn.slice(1) === faintedName;
+        });
+        const p2Match = result.player2.team.find(p => {
+          const dn = p.frenchName || p.name;
+          return dn.charAt(0).toUpperCase() + dn.slice(1) === faintedName;
+        });
+        if (p1Match) fainted.add(p1Match.id);
+        if (p2Match) fainted.add(p2Match.id);
+      }
+    }
+
+    return {
+      faintedIds: fainted,
+      activeP1Id: lastP1?.id ?? result.player1.team[0]?.id,
+      activeP2Id: lastP2?.id ?? result.player2.team[0]?.id,
+    };
+  }, [visibleCount, result]);
+
   useEffect(() => {
     if (visibleCount < totalRounds) {
       timerRef.current = setTimeout(() => {
@@ -45,14 +92,12 @@ export function BattleLog({ result, onClose, onXpAwarded }: BattleLogProps) {
     return () => clearTimeout(timerRef.current);
   }, [visibleCount, totalRounds, battleDone, showWinner, showXp, result.rounds, result.xpGains]);
 
-  // Auto-scroll to latest round
   useEffect(() => {
     if (roundsRef.current) {
       roundsRef.current.scrollTop = roundsRef.current.scrollHeight;
     }
   }, [visibleCount, showXp]);
 
-  // Notify parent to apply XP once shown
   useEffect(() => {
     if (showXp && !xpAwarded) {
       setXpAwarded(true);
@@ -68,12 +113,39 @@ export function BattleLog({ result, onClose, onXpAwarded }: BattleLogProps) {
     }
   };
 
+  const renderTeamBanner = (team: Pokemon[], playerName: string, activeId: number | undefined) => (
+    <div className="team-banner">
+      <span className="team-banner-name">{playerName}</span>
+      <div className="team-banner-slots">
+        {team.map(poke => {
+          const isActive = poke.id === activeId;
+          const isKo = faintedIds.has(poke.id);
+          return (
+            <div
+              key={poke.id}
+              className={`team-banner-poke${isActive ? ' active' : ''}${isKo ? ' ko' : ''}`}
+              title={`${poke.frenchName || poke.name} Nv.${poke.level}${isKo ? ' (K.O.)' : ''}`}
+            >
+              <img src={poke.sprite || spriteUrl(poke.id)} alt={poke.frenchName || poke.name} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="battle-log-overlay" onClick={onClose}>
       <div className="battle-log" onClick={e => e.stopPropagation()}>
         <div className="battle-log-header">
           <h3>Combat : {result.player1.name} vs {result.player2.name}</h3>
           <button className="close-btn" onClick={onClose}>&times;</button>
+        </div>
+
+        <div className="team-banners">
+          {renderTeamBanner(result.player1.team, result.player1.name, activeP1Id)}
+          <span className="banners-vs">VS</span>
+          {renderTeamBanner(result.player2.team, result.player2.name, activeP2Id)}
         </div>
 
         <div className="battle-rounds" ref={roundsRef}>

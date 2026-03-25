@@ -1,0 +1,96 @@
+.challenge-notifications {
+  position: fixed;
+  top: 80px;
+  right: 16px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.challenge-toast {
+  background: white;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid #F8D030;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  animation: challenge-slide-in 0.3s ease;
+}
+
+.challenge-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.challenge-info {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.challenge-timer {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.75rem;
+  color: #DC0A2D;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.challenge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.challenge-player-select {
+  padding: 4px 8px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+.challenge-accept {
+  padding: 5px 14px;
+  background: #3a9a3a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.challenge-accept:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.challenge-decline {
+  padding: 5px 14px;
+  background: #eee;
+  color: #888;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes challenge-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

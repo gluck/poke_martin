@@ -1,17 +1,48 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { executeBattle } from '../utils/battle';
 import { BattleLog } from './BattleLog';
-import { getEvolutionChain, findNextEvolution } from '../api/evolution';
-import { lookupFrenchName } from '../api/frenchNames';
-import type { PendingEvolution } from '../types';
+import { transformApiPokemon } from '../api/pokeapi';
+import type { Player, PokeAPIPokemon } from '../types';
 import './BattleArena.css';
+
+async function generateRandomTeam(teamSize: number, levels: number[]): Promise<Player> {
+  const pokemonIds = new Set<number>();
+  while (pokemonIds.size < teamSize) {
+    pokemonIds.add(Math.floor(Math.random() * 898) + 1);
+  }
+
+  const team = await Promise.all(
+    Array.from(pokemonIds).map(async (id, i) => {
+      try {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+        if (!res.ok) return null;
+        const raw: PokeAPIPokemon = await res.json();
+        const poke = await transformApiPokemon(raw);
+        poke.level = levels[i] ?? levels[0] ?? 5;
+        return poke;
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const validTeam = team.filter(p => p !== null);
+  return {
+    id: 'random-' + Date.now(),
+    name: 'Dresseur Sauvage',
+    team: validTeam,
+    reserve: [],
+  };
+}
 
 export function BattleArena() {
   const { state, dispatch } = useGame();
   const [player1Id, setPlayer1Id] = useState('');
   const [player2Id, setPlayer2Id] = useState('');
   const [error, setError] = useState('');
+  const [randomPlayerId, setRandomPlayerId] = useState('');
+  const [loadingRandom, setLoadingRandom] = useState(false);
 
   const eligiblePlayers = state.players.filter(p => p.team.length > 0);
 
@@ -30,65 +61,47 @@ export function BattleArena() {
     if (!p1 || !p2) return;
 
     const result = executeBattle(p1, p2);
-    dispatch({ type: 'SET_BATTLE_RESULT', result });
+    dispatch({ type: 'SET_BATTLE_RESULT', result: { ...result, xpGains: [] } });
   };
 
-  const handleXpAwarded = useCallback(() => {
-    const battle = state.currentBattle;
-    if (!battle?.winner || !battle.xpGains.length) return;
+  const handleRandomFight = async () => {
+    if (!randomPlayerId) {
+      setError('Choisis ton joueur');
+      return;
+    }
+    setError('');
+    setLoadingRandom(true);
 
-    const winnerId = battle.winner.id;
-
-    // Apply XP to each winning pokemon
-    for (const gain of battle.xpGains) {
-      dispatch({ type: 'GAIN_XP', playerId: winnerId, pokemonId: gain.pokemonId, xp: gain.xp });
+    const player = state.players.find(p => p.id === randomPlayerId);
+    if (!player || player.team.length === 0) {
+      setError('Ce joueur n\'a pas de Pokemon');
+      setLoadingRandom(false);
+      return;
     }
 
-    // Check for evolutions after XP is applied
-    setTimeout(() => {
-      const winnerPlayer = state.players.find(p => p.id === winnerId);
-      if (!winnerPlayer) return;
-
-      for (const gain of battle.xpGains) {
-        if (gain.newLevel <= gain.oldLevel) continue;
-        const poke = winnerPlayer.team.find(p => p.id === gain.pokemonId);
-        if (!poke || poke.evolutionChainId <= 0) continue;
-
-        const chain = getEvolutionChain(poke.evolutionChainId);
-        if (!chain) continue;
-
-        const nextEvo = findNextEvolution(chain, poke.name);
-        if (!nextEvo || gain.newLevel < nextEvo.minLevel) continue;
-
-        // Fetch sprite for the evolved form
-        const evoFrenchName = lookupFrenchName(nextEvo.speciesName);
-        const evoSprite = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${nextEvo.speciesId}.png`;
-
-        const pending: PendingEvolution = {
-          playerId: winnerId,
-          pokemonId: poke.id,
-          fromName: poke.name,
-          fromFrenchName: poke.frenchName,
-          fromSprite: poke.sprite,
-          intoSpeciesId: nextEvo.speciesId,
-          intoName: nextEvo.speciesName,
-          intoFrenchName: evoFrenchName,
-          intoSprite: evoSprite,
-        };
-        dispatch({ type: 'SET_PENDING_EVOLUTION', evolution: pending });
-        break; // Handle one evolution at a time
+    try {
+      const levels = player.team.map(p => p.level);
+      const opponent = await generateRandomTeam(player.team.length, levels);
+      if (opponent.team.length === 0) {
+        setError('Erreur lors de la generation de l\'adversaire');
+        setLoadingRandom(false);
+        return;
       }
-    }, 500);
-  }, [state.currentBattle, state.players, dispatch]);
+      const result = executeBattle(player, opponent);
+      dispatch({ type: 'SET_BATTLE_RESULT', result: { ...result, xpGains: [] } });
+    } catch {
+      setError('Erreur lors du combat');
+    } finally {
+      setLoadingRandom(false);
+    }
+  };
 
   return (
     <section className="battle-arena">
       <h2>Arene de Combat</h2>
-      {eligiblePlayers.length < 2 ? (
-        <p className="battle-hint">
-          Il faut au moins 2 joueurs avec des Pokemon pour combattre.
-        </p>
-      ) : (
+
+      {/* Combat entre joueurs */}
+      {eligiblePlayers.length >= 2 && (
         <div className="battle-controls">
           <div className="battle-selectors">
             <select
@@ -123,16 +136,46 @@ export function BattleArena() {
           <button className="fight-btn" onClick={handleFight}>
             COMBAT !
           </button>
-
-          {error && <p className="battle-error">{error}</p>}
         </div>
       )}
+
+      {/* Combat aleatoire */}
+      {eligiblePlayers.length >= 1 && (
+        <div className="random-battle">
+          <div className="random-battle-row">
+            <select
+              value={randomPlayerId}
+              onChange={e => setRandomPlayerId(e.target.value)}
+              className="player-select"
+            >
+              <option value="">Ton joueur...</option>
+              {eligiblePlayers.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.team.length} Pokemon)
+                </option>
+              ))}
+            </select>
+
+            <span className="vs-badge">VS</span>
+            <span className="random-opponent">? Dresseur Sauvage ?</span>
+          </div>
+
+          <button
+            className="fight-btn random-fight-btn"
+            onClick={handleRandomFight}
+            disabled={loadingRandom}
+          >
+            {loadingRandom ? 'Generation...' : 'COMBAT ALEATOIRE !'}
+          </button>
+        </div>
+      )}
+
+      {error && <p className="battle-error">{error}</p>}
 
       {state.currentBattle && (
         <BattleLog
           result={state.currentBattle}
           onClose={() => dispatch({ type: 'CLEAR_BATTLE' })}
-          onXpAwarded={handleXpAwarded}
         />
       )}
     </section>
