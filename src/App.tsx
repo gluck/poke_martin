@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Header } from './components/Header'
-import { PokemonSearch } from './components/PokemonSearch'
 import { PlayerList } from './components/PlayerList'
 import { BattleArena } from './components/BattleArena'
 import { EvolutionModal } from './components/EvolutionModal'
@@ -9,6 +8,8 @@ import { FriendsList } from './components/FriendsList'
 import { OnlineBattleArena } from './components/OnlineBattleArena'
 import { BattleHistory } from './components/BattleHistory'
 import { ChallengeNotification } from './components/ChallengeNotification'
+import { RegionExplorer } from './components/RegionExplorer'
+import { Pokedex } from './components/Pokedex'
 import { getFrenchNameIndex, getFrenchNameIndexSync } from './api/frenchNames'
 import { useGame } from './context/GameContext'
 import { useAuth } from './context/AuthContext'
@@ -16,10 +17,13 @@ import { transformApiPokemon } from './api/pokeapi'
 import type { PokeAPIPokemon } from './types'
 import './App.css'
 
+export type Page = 'team' | 'explore' | 'pokedex' | 'combat' | 'social';
+
 function App() {
   const { user, loading: authLoading } = useAuth();
   const [indexReady, setIndexReady] = useState(() => getFrenchNameIndexSync() !== null);
   const { state, dispatch, loading: gameLoading } = useGame();
+  const [page, setPage] = useState<Page>('team');
 
   useEffect(() => {
     if (!indexReady) {
@@ -62,19 +66,24 @@ function App() {
 
   return (
     <div className="app">
-      <Header />
+      <Header page={page} onNavigate={setPage} />
       {(gameLoading || !indexReady) && (
         <div className="loading-banner">
           {gameLoading ? 'Chargement de tes Pokemon...' : "Chargement de l'index des Pokemon..."}
         </div>
       )}
       <main className="app-main">
-        <PokemonSearch />
-        <PlayerList />
-        <BattleArena />
-        <FriendsList />
-        <OnlineBattleArena />
-        <BattleHistory />
+        {page === 'team' && <PlayerList />}
+        {page === 'explore' && <RegionExplorer />}
+        {page === 'pokedex' && <Pokedex />}
+        {page === 'combat' && <BattleArena />}
+        {page === 'social' && (
+          <>
+            <FriendsList />
+            <OnlineBattleArena />
+            <BattleHistory />
+          </>
+        )}
       </main>
       <ChallengeNotification />
       {state.pendingEvolution && (

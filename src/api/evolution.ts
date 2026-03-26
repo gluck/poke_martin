@@ -257,7 +257,16 @@ export function getEvolutionNeighbors(chainId: number, speciesName: string, spec
     };
   }
 
-  if (!chain) return { prev: null, next: [], megas: [] };
+  // Get mega/alternate forms for this species (always, even without chain)
+  const megas: EvolutionNeighborEntry[] = [];
+  if (speciesId) {
+    const varieties = getVarieties(speciesId);
+    for (const v of varieties) {
+      megas.push({ speciesId: v.pokemonId, speciesName: v.name, label: v.label });
+    }
+  }
+
+  if (!chain) return { prev: null, next: [], megas };
 
   const current = findInChain(chain, speciesName);
   const parent = findParentInChain(chain, speciesName, null);
@@ -267,15 +276,6 @@ export function getEvolutionNeighbors(chainId: number, speciesName: string, spec
     : null;
 
   const next = current?.evolvesTo.map(e => ({ speciesId: e.speciesId, speciesName: e.speciesName })) ?? [];
-
-  // Get mega/alternate forms for this species
-  const megas: EvolutionNeighborEntry[] = [];
-  if (speciesId) {
-    const varieties = getVarieties(speciesId);
-    for (const v of varieties) {
-      megas.push({ speciesId: v.pokemonId, speciesName: v.name, label: v.label });
-    }
-  }
 
   return { prev, next, megas };
 }

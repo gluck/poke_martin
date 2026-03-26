@@ -1,0 +1,82 @@
+.pokedex h2 {
+  color: #DC0A2D;
+  margin: 0 0 16px;
+}
+
+.pokedex-search-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pokedex-search-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.pokedex-search-input:focus {
+  border-color: #DC0A2D;
+}
+
+.pokedex-search-btn {
+  padding: 10px 24px;
+  background: #DC0A2D;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.pokedex-search-btn:hover {
+  background: #A00020;
+}
+
+.pokedex-search-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.pokedex-back {
+  background: none;
+  border: none;
+  color: #4a90d9;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 12px;
+  padding: 0;
+}
+
+.pokedex-back:hover {
+  text-decoration: underline;
+}
+
+.pokedex-error {
+  color: #DC0A2D;
+  font-size: 0.9rem;
+}
+
+.pokedex-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+}
+
+.pokedex-results .evo-link {
+  width: 32px;
+  height: 32px;
+  margin-right: 0;
+}
+
+.pokedex-results .pokemon-actions {
+  gap: 6px;
+}

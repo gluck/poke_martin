@@ -1,0 +1,203 @@
+.region-explorer h2 {
+  color: #DC0A2D;
+  margin: 0 0 16px;
+}
+
+.explorer-player-select {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.explorer-player-select label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.explorer-player-select select {
+  padding: 8px 14px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.explorations-remaining {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a90d9;
+  background: #e8f4fd;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.region-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.region-card {
+  position: relative;
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: #222;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s, box-shadow 0.25s;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: flex-end;
+}
+
+.region-card:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+}
+
+.region-card:hover:not(:disabled) .region-card-img {
+  transform: scale(1.08);
+  filter: brightness(1.1);
+}
+
+.region-card:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.region-card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s, filter 0.3s;
+}
+
+.region-card-name {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 8px 0;
+  color: white;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.explorer-error {
+  color: #DC0A2D;
+  font-size: 0.9rem;
+}
+
+/* Wild encounter */
+
+.wild-encounter {
+  text-align: center;
+}
+
+.wild-encounter h3 {
+  color: #DC0A2D;
+  margin: 0 0 16px;
+  animation: wild-pulse 1s ease-in-out 2;
+}
+
+@keyframes wild-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.encounter-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.combat-action {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.combat-action label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.fighter-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.fighter-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fighter-btn img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.fighter-btn span {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #888;
+}
+
+.fighter-btn:hover:not(:disabled) {
+  border-color: #DC0A2D;
+  box-shadow: 0 0 8px rgba(220, 10, 45, 0.2);
+}
+
+.fighter-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.charm-btn {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #F8D030, #F0A030);
+  color: #333;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(240, 160, 48, 0.3);
+}
+
+.charm-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.charm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

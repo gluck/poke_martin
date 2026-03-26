@@ -115,6 +115,156 @@
   transform: none;
 }
 
+/* Duel 1v1 */
+
+.duel-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px dashed #e0e0e0;
+}
+
+.duel-section h3 {
+  margin: 0;
+  color: #4a90d9;
+  font-size: 1.2rem;
+}
+
+.duel-sides {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.duel-side {
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.duel-search-form {
+  display: flex;
+  gap: 6px;
+}
+
+.duel-search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.duel-search-input:focus {
+  border-color: #4a90d9;
+}
+
+.duel-search-btn {
+  padding: 8px 14px;
+  background: #4a90d9;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.duel-search-btn:disabled {
+  opacity: 0.5;
+}
+
+.duel-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.duel-pick {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  background: #f8f8f8;
+  cursor: pointer;
+  padding: 2px;
+  transition: all 0.2s;
+}
+
+.duel-pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.duel-pick:hover {
+  border-color: #4a90d9;
+  box-shadow: 0 0 8px rgba(74, 144, 217, 0.3);
+}
+
+.duel-selected {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.duel-clear {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #4a90d9;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.duel-clear:hover {
+  text-decoration: underline;
+}
+
+.duel-level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.duel-level label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #555;
+  min-width: 80px;
+}
+
+.duel-slider {
+  width: 200px;
+  accent-color: #4a90d9;
+}
+
+.duel-btn {
+  background: linear-gradient(135deg, #4a90d9, #2a6ab9);
+  box-shadow: 0 4px 20px rgba(74, 144, 217, 0.3);
+}
+
+.duel-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 30px rgba(74, 144, 217, 0.4);
+}
+
+.duel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .battle-error {
   color: #DC0A2D;
   font-size: 0.9rem;

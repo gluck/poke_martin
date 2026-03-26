@@ -5,6 +5,7 @@ import { StatBar } from './StatBar';
 import { getGrowthRate, getXpToNextLevel, getEvolutionNeighbors } from '../api/evolution';
 import { lookupFrenchName } from '../api/frenchNames';
 import { getEffectiveStats } from '../utils/stats';
+import { ConfirmModal } from './ConfirmModal';
 import './PokemonCard.css';
 
 interface PokemonCardProps {
@@ -12,9 +13,10 @@ interface PokemonCardProps {
   players?: Player[];
   onAddToPlayer?: (playerId: string) => void;
   onRemove?: () => void;
-  onLevelUp?: () => void;
+  onLevelUp?: (delta?: number) => void;
   onEvolve?: (speciesId: number) => void;
   compact?: boolean;
+  hideLevel?: boolean;
 }
 
 const isDev = import.meta.env.DEV;
@@ -23,10 +25,11 @@ function spriteUrl(speciesId: number): string {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${speciesId}.png`;
 }
 
-export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevelUp, onEvolve, compact }: PokemonCardProps) {
+export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevelUp, onEvolve, compact, hideLevel }: PokemonCardProps) {
   const statKeys = ['hp', 'attack', 'defense', 'spAtk', 'spDef', 'speed'] as const;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const playCry = () => {
     if (!pokemon.cryUrl) return;
@@ -48,11 +51,9 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevel
 
   const growthRate = getGrowthRate(pokemon.growthRateId);
   const xpProgress = growthRate ? getXpToNextLevel(growthRate, pokemon.currentXp, pokemon.level) : null;
-  const showLevel = pokemon.level > 0;
+  const showLevel = pokemon.level > 0 && !hideLevel;
 
-  const neighbors = pokemon.evolutionChainId > 0
-    ? getEvolutionNeighbors(pokemon.evolutionChainId, pokemon.name, pokemon.id)
-    : null;
+  const neighbors = getEvolutionNeighbors(pokemon.evolutionChainId, pokemon.name, pokemon.id);
   const hasEvoLinks = onEvolve && neighbors && (neighbors.prev || neighbors.next.length > 0 || neighbors.megas.length > 0);
   const effectiveStats = showLevel ? getEffectiveStats(pokemon.stats, pokemon.level) : pokemon.stats;
 
@@ -76,7 +77,9 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevel
           {pokemon.frenchName || pokemon.name}
           {showLevel && (
             isDev && onLevelUp ? (
-              <button className="pokemon-level dev-clickable" onClick={onLevelUp} title="[DEV] +1 niveau">
+              <button className="pokemon-level dev-clickable" onClick={e => {
+                onLevelUp(e.shiftKey ? -1 : 1);
+              }} title="[DEV] Click: +1 / Shift+Click: -1">
                 Nv. {pokemon.level}
               </button>
             ) : (
@@ -107,6 +110,7 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevel
             <StatBar key={k} statKey={k} value={effectiveStats[k]} />
           ))}
         </div>
+        <div className="pokemon-actions-row">
         <div className="pokemon-actions">
           {onAddToPlayer && players && players.length > 0 && (
             <select
@@ -154,19 +158,28 @@ export function PokemonCard({ pokemon, players, onAddToPlayer, onRemove, onLevel
               <img src={spriteUrl(mega.speciesId)} alt={mega.speciesName} />
             </button>
           ))}
-          {onRemove && (
-            <button className="remove-btn" onClick={() => {
-              const name = pokemon.frenchName || pokemon.name;
-              if (pokemon.level > 5) {
-                if (!window.confirm(`${name} est Nv. ${pokemon.level}. Le supprimer ?`)) return;
-              }
+        </div>
+        {onRemove && (
+          <button className="remove-btn" onClick={() => {
+            if (pokemon.level > 5) {
+              setShowRemoveConfirm(true);
+            } else {
               onRemove();
-            }} title="Retirer">
-              &times;
-            </button>
-          )}
+            }
+          }} title="Retirer">
+            &times;
+          </button>
+        )}
         </div>
       </div>
+      {showRemoveConfirm && onRemove && (
+        <ConfirmModal
+          message={`${pokemon.frenchName || pokemon.name} est Nv. ${pokemon.level}. Le supprimer ?`}
+          confirmLabel="Supprimer"
+          onConfirm={() => { setShowRemoveConfirm(false); onRemove(); }}
+          onCancel={() => setShowRemoveConfirm(false)}
+        />
+      )}
     </div>
   );
 }

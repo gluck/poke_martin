@@ -185,7 +185,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'ADD_PLAYER':
       return {
         ...state,
-        players: [...state.players, { id: crypto.randomUUID(), name: action.name, team: [], reserve: [] }],
+        players: [...state.players, {
+          id: crypto.randomUUID(),
+          name: action.name,
+          team: action.starterPokemon ? [action.starterPokemon] : [],
+          reserve: [],
+        }],
       };
     case 'REMOVE_PLAYER':
       return {
@@ -302,19 +307,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }),
       };
     case 'EVOLVE_POKEMON': {
-      const startLevel = 5;
-      const startGr = getGrowthRate(action.evolvedPokemon.growthRateId);
-      const startXp = startGr ? getXpForLevel(startGr, startLevel) : 0;
       return {
         ...state,
         players: state.players.map(p => {
           if (p.id !== action.playerId) return p;
           const evolve = (pk: typeof action.evolvedPokemon) => {
             if (pk.id !== action.pokemonId) return pk;
+            // Evolving costs 10 levels, devolving grants +5
+            const isDowngrade = action.evolvedPokemon.id < pk.id;
+            const newLevel = isDowngrade
+              ? Math.min(pk.level + 5, 100)
+              : Math.max(pk.level - 10, 1);
+            const gr = getGrowthRate(action.evolvedPokemon.growthRateId);
+            const newXp = gr ? getXpForLevel(gr, newLevel) : 0;
             return {
               ...action.evolvedPokemon,
-              level: startLevel,
-              currentXp: startXp,
+              level: newLevel,
+              currentXp: newXp,
             };
           };
           return {
@@ -494,7 +503,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const prev = prevStateRef.current;
     const newPlayers = state.players.filter(p => !prev.players.some(pp => pp.id === p.id));
     for (const p of newPlayers) {
-      syncAddPlayer(userId, p);
+      (async () => {
+        await syncAddPlayer(userId, p);
+        // Sync starter Pokemon if present
+        for (const [index, poke] of p.team.entries()) {
+          await syncAddPokemon(p.id, poke, 'team', index);
+        }
+      })();
     }
     prevStateRef.current = state;
   }, [state, userId]);

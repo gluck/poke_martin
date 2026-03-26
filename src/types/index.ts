@@ -146,7 +146,7 @@ export interface GameState {
 }
 
 export type GameAction =
-  | { type: 'ADD_PLAYER'; name: string }
+  | { type: 'ADD_PLAYER'; name: string; starterPokemon?: Pokemon }
   | { type: 'REMOVE_PLAYER'; playerId: string }
   | { type: 'ADD_POKEMON'; playerId: string; pokemon: Pokemon }
   | { type: 'REMOVE_POKEMON'; playerId: string; pokemonId: number }

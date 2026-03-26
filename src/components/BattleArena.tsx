@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { executeBattle } from '../utils/battle';
 import { BattleLog } from './BattleLog';
+import { PokemonCard } from './PokemonCard';
 import { transformApiPokemon } from '../api/pokeapi';
-import type { Player, PokeAPIPokemon } from '../types';
+import { searchPokemonByPartial } from '../api/pokeapi';
+import type { Player, Pokemon, PokeAPIPokemon } from '../types';
 import './BattleArena.css';
 
 async function generateRandomTeam(teamSize: number, levels: number[]): Promise<Player> {
@@ -43,6 +45,16 @@ export function BattleArena() {
   const [error, setError] = useState('');
   const [randomPlayerId, setRandomPlayerId] = useState('');
   const [loadingRandom, setLoadingRandom] = useState(false);
+
+  // Duel 1v1
+  const [duelSearch1, setDuelSearch1] = useState('');
+  const [duelSearch2, setDuelSearch2] = useState('');
+  const [duelResults1, setDuelResults1] = useState<Pokemon[]>([]);
+  const [duelResults2, setDuelResults2] = useState<Pokemon[]>([]);
+  const [duelPoke1, setDuelPoke1] = useState<Pokemon | null>(null);
+  const [duelPoke2, setDuelPoke2] = useState<Pokemon | null>(null);
+  const [duelLevel, setDuelLevel] = useState(50);
+  const [duelLoading, setDuelLoading] = useState(false);
 
   const eligiblePlayers = state.players.filter(p => p.team.length > 0);
 
@@ -94,6 +106,87 @@ export function BattleArena() {
     } finally {
       setLoadingRandom(false);
     }
+  };
+
+  // Duel search
+  const handleDuelSearch = async (side: 1 | 2) => {
+    const query = side === 1 ? duelSearch1 : duelSearch2;
+    if (!query.trim()) return;
+    setDuelLoading(true);
+    try {
+      const results = await searchPokemonByPartial(query);
+      if (side === 1) setDuelResults1(results);
+      else setDuelResults2(results);
+    } catch { /* ignore */ }
+    finally { setDuelLoading(false); }
+  };
+
+  const handleDuelSelectEvo = async (side: 1 | 2, speciesId: number) => {
+    try {
+      const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${speciesId}`);
+      if (!res.ok) return;
+      const raw: PokeAPIPokemon = await res.json();
+      const poke = await transformApiPokemon(raw);
+      if (side === 1) setDuelPoke1(poke);
+      else setDuelPoke2(poke);
+    } catch { /* ignore */ }
+  };
+
+  const handleDuel = () => {
+    if (!duelPoke1 || !duelPoke2) {
+      setError('Choisis un Pokemon de chaque cote');
+      return;
+    }
+    setError('');
+    const p1 = { ...duelPoke1, level: duelLevel };
+    const p2 = { ...duelPoke2, level: duelLevel };
+    const result = executeBattle(
+      { id: 'duel-1', name: p1.frenchName || p1.name, team: [p1], reserve: [] },
+      { id: 'duel-2', name: p2.frenchName || p2.name, team: [p2], reserve: [] },
+    );
+    dispatch({ type: 'SET_BATTLE_RESULT', result: { ...result, xpGains: [] } });
+  };
+
+  const renderDuelSide = (side: 1 | 2) => {
+    const search = side === 1 ? duelSearch1 : duelSearch2;
+    const setSearch = side === 1 ? setDuelSearch1 : setDuelSearch2;
+    const results = side === 1 ? duelResults1 : duelResults2;
+    const selected = side === 1 ? duelPoke1 : duelPoke2;
+    const setSelected = side === 1 ? setDuelPoke1 : setDuelPoke2;
+
+    return (
+      <div className="duel-side">
+        <form className="duel-search-form" onSubmit={e => { e.preventDefault(); handleDuelSearch(side); }}>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Chercher..."
+            className="duel-search-input"
+          />
+          <button type="submit" className="duel-search-btn" disabled={duelLoading}>Chercher</button>
+        </form>
+        {!selected && results.length > 0 && (
+          <div className="duel-results">
+            {results.map(p => (
+              <button key={p.id} className="duel-pick" onClick={() => setSelected(p)} title={p.frenchName || p.name}>
+                <img src={p.sprite} alt={p.frenchName || p.name} />
+              </button>
+            ))}
+          </div>
+        )}
+        {selected && (
+          <div className="duel-selected">
+            <PokemonCard
+              pokemon={selected}
+              hideLevel
+              onEvolve={(speciesId) => handleDuelSelectEvo(side, speciesId)}
+            />
+            <button className="duel-clear" onClick={() => setSelected(null)}>Changer</button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -169,6 +262,34 @@ export function BattleArena() {
           </button>
         </div>
       )}
+
+      {/* Duel 1v1 */}
+      <div className="duel-section">
+        <h3>Duel 1v1</h3>
+        <div className="duel-sides">
+          {renderDuelSide(1)}
+          <span className="vs-badge">VS</span>
+          {renderDuelSide(2)}
+        </div>
+        <div className="duel-level">
+          <label>Niveau : {duelLevel}</label>
+          <input
+            type="range"
+            min={1}
+            max={100}
+            value={duelLevel}
+            onChange={e => setDuelLevel(Number(e.target.value))}
+            className="duel-slider"
+          />
+        </div>
+        <button
+          className="fight-btn duel-btn"
+          onClick={handleDuel}
+          disabled={!duelPoke1 || !duelPoke2}
+        >
+          DUEL !
+        </button>
+      </div>
 
       {error && <p className="battle-error">{error}</p>}
 

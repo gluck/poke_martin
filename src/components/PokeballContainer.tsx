@@ -5,6 +5,7 @@ import { PokemonCard } from './PokemonCard';
 import { getEvolutionChain, findNextEvolution } from '../api/evolution';
 import { transformApiPokemon } from '../api/pokeapi';
 import { lookupFrenchName } from '../api/frenchNames';
+import { ConfirmModal } from './ConfirmModal';
 import './PokeballContainer.css';
 
 export function PokeballContainer({ player }: { player: Player }) {
@@ -13,6 +14,7 @@ export function PokeballContainer({ player }: { player: Player }) {
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [showReserve, setShowReserve] = useState(false);
   const teamListRef = useRef<HTMLDivElement>(null);
+  const [confirmState, setConfirmState] = useState<{ message: string; onConfirm: () => void; confirmLabel?: string } | null>(null);
 
   // --- Desktop drag ---
   const handleDragStart = (index: number) => {
@@ -72,11 +74,11 @@ export function PokeballContainer({ player }: { player: Player }) {
     setOverIndex(null);
   };
 
-  const handleDevLevelUp = useCallback((pokemonId: number) => {
+  const handleDevLevelUp = useCallback((pokemonId: number, delta: number = 1) => {
     const poke = player.team.find(p => p.id === pokemonId) || player.reserve.find(p => p.id === pokemonId);
-    if (!poke || poke.level >= 100) return;
-
-    const newLevel = poke.level + 1;
+    if (!poke) return;
+    const newLevel = Math.max(1, Math.min(100, poke.level + delta));
+    if (newLevel === poke.level) return;
     dispatch({ type: 'SET_LEVEL', playerId: player.id, pokemonId, level: newLevel });
     // Check evolution
     if (poke.evolutionChainId > 0) {
@@ -103,16 +105,7 @@ export function PokeballContainer({ player }: { player: Player }) {
     }
   }, [player, dispatch]);
 
-  const handleEvolve = useCallback(async (pokemonId: number, targetSpeciesId: number) => {
-    const poke = player.team.find(p => p.id === pokemonId) || player.reserve.find(p => p.id === pokemonId);
-    if (!poke) return;
-    const name = poke.frenchName || poke.name;
-    if (poke.level > 5) {
-      const ok = window.confirm(
-        `${name} est Nv. ${poke.level}. L'evolution remettra son niveau a 5. Continuer ?`
-      );
-      if (!ok) return;
-    }
+  const doEvolve = useCallback(async (pokemonId: number, targetSpeciesId: number) => {
     try {
       const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${targetSpeciesId}`);
       if (!res.ok) return;
@@ -121,6 +114,37 @@ export function PokeballContainer({ player }: { player: Player }) {
       dispatch({ type: 'EVOLVE_POKEMON', playerId: player.id, pokemonId, evolvedPokemon });
     } catch { /* ignore */ }
   }, [player, dispatch]);
+
+  const handleEvolve = useCallback((pokemonId: number, targetSpeciesId: number) => {
+    const poke = player.team.find(p => p.id === pokemonId) || player.reserve.find(p => p.id === pokemonId);
+    if (!poke) return;
+    const name = poke.frenchName || poke.name;
+    const isDowngrade = targetSpeciesId < poke.id; // rough heuristic
+    const newLevel = isDowngrade ? poke.level + 5 : poke.level - 10;
+
+    if (!isDowngrade && poke.level < 10) {
+      setConfirmState({
+        message: `${name} doit etre au moins Nv. 10 pour evoluer (actuellement Nv. ${poke.level}).`,
+        onConfirm: () => setConfirmState(null),
+        confirmLabel: 'OK',
+      });
+      return;
+    }
+
+    if (isDowngrade) {
+      setConfirmState({
+        message: `Devolution de ${name} : +5 niveaux (Nv. ${poke.level} → Nv. ${Math.min(newLevel, 100)}). Continuer ?`,
+        confirmLabel: 'Devoluer',
+        onConfirm: () => { setConfirmState(null); doEvolve(pokemonId, targetSpeciesId); },
+      });
+    } else {
+      setConfirmState({
+        message: `Evoluer ${name} coutera 10 niveaux (Nv. ${poke.level} → Nv. ${Math.max(newLevel, 1)}). Continuer ?`,
+        confirmLabel: 'Evoluer',
+        onConfirm: () => { setConfirmState(null); doEvolve(pokemonId, targetSpeciesId); },
+      });
+    }
+  }, [player, doEvolve]);
 
   return (
     <div className="pokeball-container">
@@ -135,9 +159,11 @@ export function PokeballContainer({ player }: { player: Player }) {
             const msg = total > 0
               ? `Supprimer ${player.name} et ses ${total} Pokemon ?`
               : `Supprimer ${player.name} ?`;
-            if (window.confirm(msg)) {
-              dispatch({ type: 'REMOVE_PLAYER', playerId: player.id });
-            }
+            setConfirmState({
+              message: msg,
+              confirmLabel: 'Supprimer',
+              onConfirm: () => { setConfirmState(null); dispatch({ type: 'REMOVE_PLAYER', playerId: player.id }); },
+            });
           }}
           title="Supprimer le joueur"
         >
@@ -167,7 +193,7 @@ export function PokeballContainer({ player }: { player: Player }) {
                 pokemon={pokemon}
                 compact
                 onRemove={() => dispatch({ type: 'REMOVE_POKEMON', playerId: player.id, pokemonId: pokemon.id })}
-                onLevelUp={() => handleDevLevelUp(pokemon.id)}
+                onLevelUp={(delta) => handleDevLevelUp(pokemon.id, delta)}
                 onEvolve={(speciesId) => handleEvolve(pokemon.id, speciesId)}
               />
               <button
@@ -202,7 +228,7 @@ export function PokeballContainer({ player }: { player: Player }) {
                     pokemon={pokemon}
                     compact
                     onRemove={() => dispatch({ type: 'REMOVE_FROM_RESERVE', playerId: player.id, pokemonId: pokemon.id })}
-                    onLevelUp={() => handleDevLevelUp(pokemon.id)}
+                    onLevelUp={(delta) => handleDevLevelUp(pokemon.id, delta)}
                     onEvolve={(speciesId) => handleEvolve(pokemon.id, speciesId)}
                   />
                   <button
@@ -219,6 +245,14 @@ export function PokeballContainer({ player }: { player: Player }) {
           </div>
         )}
       </div>
+      {confirmState && (
+        <ConfirmModal
+          message={confirmState.message}
+          confirmLabel={confirmState.confirmLabel}
+          onConfirm={confirmState.onConfirm}
+          onCancel={() => setConfirmState(null)}
+        />
+      )}
     </div>
   );
 }
